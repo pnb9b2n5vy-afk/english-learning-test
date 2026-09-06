@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="句子重組">
+<title>姊弟英文句子重組</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#64748b;--line:#dbe2ea;--blue:#2563eb;--green:#15803d;--red:#dc2626;--soft:#eef4ff}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:900px;margin:auto;padding:16px 16px 60px} h1{font-size:25px;margin:4px 0} h2{font-size:21px;margin:4px 0 10px} .small{font-size:14px;color:var(--muted);line-height:1.6}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:14px}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px} .home-card{min-height:150px;border:1px solid var(--line);border-radius:20px;background:white;padding:22px;text-align:left}
+.home-card strong{display:block;font-size:25px;margin-bottom:8px} .home-card.g3{border-top:6px solid #10b981} .home-card.g6{border-top:6px solid #2563eb}
+button{border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--text);padding:10px 14px;min-height:46px;font-size:16px} button.primary{background:var(--blue);color:white;border-color:var(--blue)} button:disabled{opacity:.5}
+.topbar{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} select{font-size:16px;min-height:44px;border:1px solid var(--line);border-radius:11px;padding:8px 10px;background:white}
+.zh{font-size:23px;line-height:1.65;font-weight:700;margin:10px 0 4px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px} .chip{font-size:13px;background:#f1f5f9;padding:5px 9px;border-radius:999px;color:#475569}
+.answer-zone{min-height:92px;border:2px dashed #cbd5e1;border-radius:16px;margin-top:18px;padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-content:flex-start}
+.word-bank{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding:4px 0}
+.wordbtn{font-size:18px;min-height:48px;padding:10px 13px;background:white;box-shadow:0 1px 2px rgba(0,0,0,.04)} .wordbtn.used{opacity:.28}
+.answer-token{font-size:18px;border-color:#93c5fd;background:#eff6ff}
+.feedback{margin-top:14px;border-radius:14px;padding:14px;font-size:19px;line-height:1.6;font-weight:750}
+.feedback.good{background:#ecfdf5;color:var(--green);border:1px solid #bbf7d0} .feedback.bad{background:#fef2f2;color:var(--red);border:1px solid #fecaca}
+.correct-line{margin-top:8px;color:#334155;font-size:17px;font-weight:500}
+.progress{height:9px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:10px} .progress>div{height:100%;background:#3b82f6}
+.action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px} .stats{font-size:14px;color:var(--muted)}
+.note{padding:12px 14px;border-radius:13px;background:#fffbeb;border:1px solid #fde68a;line-height:1.6;font-size:14px;margin-top:12px}
+.hidden{display:none!important}
+@media(max-width:600px){.home-grid{grid-template-columns:1fr} .home-card{min-height:125px} .zh{font-size:21px} .wordbtn,.answer-token{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section id="home">
+<h1>🧩 姊弟英文句子重組</h1>
+<div class="small">看自然中文提示，把英文單字重新排成完整句子。小三、小六分流；小六另外分「基礎／進階／挑戰」。</div>
+<div class="home-grid">
+<button class="home-card g3" onclick="enter('g3')"><strong>🧒 小三</strong><span>生活化句子、核心時態、問句、祈使句、頻率副詞。<br>目前 40 題。</span></button>
+<button class="home-card g6" onclick="enter('g6')"><strong>👧 小六</strong><span>加長句子，加入完成式、條件句、關係子句、被動語態等。<br>目前 96 題。</span></button>
+</div>
+<div class="note">這版把「難度」放在句型和文法，不靠艱深單字。答錯會立即顯示紅色 ❌，並顯示正確句子。</div>
+</section>
+
+<section id="app" class="hidden">
+<div class="topbar">
+<div><h2 id="title"></h2><div id="subtitle" class="small"></div></div>
+<button onclick="goHome()">← 換年級</button>
+</div>
+<div class="card">
+<div class="controls">
+<label>難度　
+<select id="levelFilter" onchange="resetRound()"></select>
+</label>
+<label>文法　
+<select id="grammarFilter" onchange="resetRound()"><option value="全部">全部文法</option></select>
+</label>
+<button class="primary" onclick="resetRound()">🎲 重新抽題</button>
+</div>
+<div class="small" style="margin-top:10px">每輪會隨機出題，盡量避免短時間重複。</div>
+</div>
+
+<div class="card">
+<div class="topbar"><div class="stats">第 <span id="num">1</span> 題　｜　答對 <span id="score">0</span>　答錯 <span id="wrong">0</span></div><div class="stats">題庫 <span id="poolCount"></span> 題</div></div>
+<div class="progress"><div id="bar" style="width:0%"></div></div>
+<div class="zh" id="zh"></div>
+<div class="meta"><span class="chip" id="grammarChip"></span><span class="chip" id="levelChip"></span></div>
+<div class="answer-zone" id="answerZone"><span class="small" id="placeholder">點下面的英文片段，依序排到這裡。</span></div>
+<div class="word-bank" id="wordBank"></div>
+<div id="feedback" class="hidden"></div>
+<div class="action-row">
+<button onclick="undo()">↩️ 退一步</button>
+<button onclick="clearAnswer()">清空</button>
+<button class="primary" id="checkBtn" onclick="checkAnswer()">檢查答案</button>
+<button id="nextBtn" class="hidden" onclick="nextQuestion()">下一題 →</button>
+</div>
+</div>
+</section>
+</div>
+<script>
+const DATA={"g3": [{"zh": "我每天早上七點起床。", "en": "I get up at seven every morning.", "grammar": "現在簡單式", "level": "基礎"}, {"zh": "我妹妹喜歡在晚餐後畫畫。", "en": "My sister likes to draw after dinner.", "grammar": "現在簡單式", "level": "基礎"}, {"zh": "我們星期六常去公園。", "en": "We often go to the park on Saturdays.", "grammar": "頻率副詞", "level": "基礎"}, {"zh": "爸爸正在廚房煮晚餐。", "en": "Dad is cooking dinner in the kitchen.", "grammar": "現在進行式", "level": "基礎"}, {"zh": "他們正在操場上打籃球。", "en": "They are playing basketball on the playground.", "grammar": "現在進行式", "level": "基礎"}, {"zh": "請在吃飯前洗手。", "en": "Please wash your hands before dinner.", "grammar": "祈使句", "level": "基礎"}, {"zh": "上課時不要大聲說話。", "en": "Don't talk loudly in class.", "grammar": "否定祈使句", "level": "基礎"}, {"zh": "你會騎腳踏車嗎？", "en": "Can you ride a bike?", "grammar": "can", "level": "基礎"}, {"zh": "我的哥哥跑得很快。", "en": "My brother runs very fast.", "grammar": "副詞", "level": "基礎"}, {"zh": "這隻貓現在在桌子下面。", "en": "The cat is under the table now.", "grammar": "be 動詞", "level": "基礎"}, {"zh": "我的書包比你的重。", "en": "My schoolbag is heavier than yours.", "grammar": "比較級", "level": "基礎"}, {"zh": "今天比昨天暖和。", "en": "Today is warmer than yesterday.", "grammar": "比較級", "level": "基礎"}, {"zh": "我昨天和朋友踢足球。", "en": "I played soccer with my friends yesterday.", "grammar": "過去簡單式", "level": "基礎"}, {"zh": "媽媽昨晚做了蛋糕。", "en": "Mom made a cake last night.", "grammar": "過去簡單式", "level": "基礎"}, {"zh": "我們昨天沒有去游泳。", "en": "We didn't go swimming yesterday.", "grammar": "過去否定", "level": "基礎"}, {"zh": "你昨天有看電視嗎？", "en": "Did you watch TV yesterday?", "grammar": "過去疑問句", "level": "基礎"}, {"zh": "我早餐吃了一顆蛋和一些麵包。", "en": "I had an egg and some bread for breakfast.", "grammar": "過去簡單式", "level": "基礎"}, {"zh": "桌上有三本書。", "en": "There are three books on the table.", "grammar": "there be", "level": "基礎"}, {"zh": "冰箱裡有一些牛奶。", "en": "There is some milk in the fridge.", "grammar": "there be", "level": "基礎"}, {"zh": "我想喝一杯水。", "en": "I want to drink a glass of water.", "grammar": "want to", "level": "基礎"}, {"zh": "她需要先完成作業。", "en": "She needs to finish her homework first.", "grammar": "need to", "level": "基礎"}, {"zh": "我們放學後一起走回家。", "en": "We walk home together after school.", "grammar": "現在簡單式", "level": "基礎"}, {"zh": "他總是在睡前刷牙。", "en": "He always brushes his teeth before bed.", "grammar": "頻率副詞", "level": "基礎"}, {"zh": "我有時候搭公車去學校。", "en": "I sometimes go to school by bus.", "grammar": "頻率副詞", "level": "基礎"}, {"zh": "今天下午我們要去圖書館。", "en": "We are going to the library this afternoon.", "grammar": "be going to", "level": "基礎"}, {"zh": "明天會下雨。", "en": "It will rain tomorrow.", "grammar": "will", "level": "基礎"}, {"zh": "你應該多喝水。", "en": "You should drink more water.", "grammar": "should", "level": "基礎"}, {"zh": "我們必須準時到學校。", "en": "We must get to school on time.", "grammar": "must", "level": "基礎"}, {"zh": "請把門關上。", "en": "Please close the door.", "grammar": "祈使句", "level": "基礎"}, {"zh": "不要忘記帶你的雨傘。", "en": "Don't forget to bring your umbrella.", "grammar": "否定祈使句", "level": "基礎"}, {"zh": "她正在房間裡看一本故事書。", "en": "She is reading a storybook in her room.", "grammar": "現在進行式", "level": "基礎"}, {"zh": "那個男孩正在等公車。", "en": "The boy is waiting for the bus.", "grammar": "現在進行式", "level": "基礎"}, {"zh": "你的鉛筆盒在哪裡？", "en": "Where is your pencil case?", "grammar": "Wh-問句", "level": "基礎"}, {"zh": "你為什麼這麼開心？", "en": "Why are you so happy?", "grammar": "Wh-問句", "level": "基礎"}, {"zh": "誰坐在你旁邊？", "en": "Who sits next to you?", "grammar": "Wh-問句", "level": "基礎"}, {"zh": "我最喜歡的科目是自然。", "en": "My favorite subject is science.", "grammar": "be 動詞", "level": "基礎"}, {"zh": "這些蘋果很甜。", "en": "These apples are very sweet.", "grammar": "be 動詞", "level": "基礎"}, {"zh": "那雙鞋太大了。", "en": "Those shoes are too big.", "grammar": "too + adj", "level": "基礎"}, {"zh": "我可以借你的尺嗎？", "en": "May I borrow your ruler?", "grammar": "May I", "level": "基礎"}, {"zh": "放學後我們一起做功課吧。", "en": "Let's do our homework together after school.", "grammar": "Let's", "level": "基礎"}], "g6": [{"zh": "我通常在晚餐後練鋼琴。", "en": "I usually practice the piano after dinner.", "grammar": "頻率副詞", "level": "基礎"}, {"zh": "我妹妹從不忘記帶水壺。", "en": "My sister never forgets to bring her water bottle.", "grammar": "頻率副詞", "level": "基礎"}, {"zh": "他每天放學後都會先完成作業。", "en": "He finishes his homework first after school every day.", "grammar": "現在簡單式", "level": "基礎"}, {"zh": "現在外面正在下雨，所以我們待在家裡。", "en": "It is raining outside now, so we are staying home.", "grammar": "現在進行式", "level": "基礎"}, {"zh": "我正在看書，而弟弟正在畫畫。", "en": "I am reading while my brother is drawing.", "grammar": "現在進行式", "level": "基礎"}, {"zh": "你現在在等誰？", "en": "Who are you waiting for now?", "grammar": "現在進行式疑問句", "level": "基礎"}, {"zh": "我昨天完成作業後就去打籃球。", "en": "I played basketball after I finished my homework yesterday.", "grammar": "過去簡單式", "level": "基礎"}, {"zh": "她昨晚沒有看電視，因為她很累。", "en": "She didn't watch TV last night because she was tired.", "grammar": "過去簡單式", "level": "基礎"}, {"zh": "你昨天幾點到家？", "en": "What time did you get home yesterday?", "grammar": "過去疑問句", "level": "基礎"}, {"zh": "我們小時候常在這個公園玩。", "en": "We used to play in this park when we were young.", "grammar": "used to", "level": "基礎"}, {"zh": "桌上沒有足夠的杯子。", "en": "There aren't enough cups on the table.", "grammar": "there be / enough", "level": "基礎"}, {"zh": "請在離開教室前關燈。", "en": "Please turn off the lights before you leave the classroom.", "grammar": "祈使句", "level": "基礎"}, {"zh": "不要在走廊上跑。", "en": "Don't run in the hallway.", "grammar": "否定祈使句", "level": "基礎"}, {"zh": "你應該每天讀一點英文。", "en": "You should read a little English every day.", "grammar": "should", "level": "基礎"}, {"zh": "我們明天必須早一點出門。", "en": "We have to leave a little earlier tomorrow.", "grammar": "have to", "level": "基礎"}, {"zh": "我打算這個週末整理房間。", "en": "I am going to clean my room this weekend.", "grammar": "be going to", "level": "基礎"}, {"zh": "我想她等一下會打電話給我。", "en": "I think she will call me later.", "grammar": "will", "level": "基礎"}, {"zh": "也許我們明天會去動物園。", "en": "We might go to the zoo tomorrow.", "grammar": "might", "level": "基礎"}, {"zh": "這本書比那一本有趣。", "en": "This book is more interesting than that one.", "grammar": "比較級", "level": "基礎"}, {"zh": "我的房間沒有我哥哥的房間那麼大。", "en": "My room isn't as big as my brother's.", "grammar": "as...as", "level": "基礎"}, {"zh": "這是我們班最高的學生。", "en": "This is the tallest student in our class.", "grammar": "最高級", "level": "基礎"}, {"zh": "這個箱子夠輕，我可以自己搬。", "en": "This box is light enough for me to carry by myself.", "grammar": "enough to", "level": "基礎"}, {"zh": "教室裡的人太多了。", "en": "There are too many people in the classroom.", "grammar": "too many", "level": "基礎"}, {"zh": "我有很多作業要做。", "en": "I have a lot of homework to do.", "grammar": "不定詞", "level": "基礎"}, {"zh": "她喜歡在睡前閱讀。", "en": "She enjoys reading before bed.", "grammar": "動名詞", "level": "基礎"}, {"zh": "我希望明年學會游泳。", "en": "I hope to learn to swim next year.", "grammar": "不定詞", "level": "基礎"}, {"zh": "我們決定搭火車去台北。", "en": "We decided to take the train to Taipei.", "grammar": "不定詞", "level": "基礎"}, {"zh": "請記得把作業帶到學校。", "en": "Please remember to bring your homework to school.", "grammar": "remember to", "level": "基礎"}, {"zh": "我忘了昨天已經跟他說過這件事。", "en": "I forgot that I had already told him about it yesterday.", "grammar": "過去完成式", "level": "基礎"}, {"zh": "你想要茶還是果汁？", "en": "Would you like tea or juice?", "grammar": "would like", "level": "基礎"}, {"zh": "我已經寫完功課了，所以現在可以休息。", "en": "I have already finished my homework, so I can rest now.", "grammar": "現在完成式", "level": "進階"}, {"zh": "你曾經去過日本嗎？", "en": "Have you ever been to Japan?", "grammar": "現在完成式", "level": "進階"}, {"zh": "她還沒吃晚餐。", "en": "She hasn't eaten dinner yet.", "grammar": "現在完成式", "level": "進階"}, {"zh": "我們住在這裡已經五年了。", "en": "We have lived here for five years.", "grammar": "現在完成式 for", "level": "進階"}, {"zh": "他從三年級開始就學英文。", "en": "He has studied English since third grade.", "grammar": "現在完成式 since", "level": "進階"}, {"zh": "我剛剛才把房間整理好。", "en": "I have just finished cleaning my room.", "grammar": "現在完成式 just", "level": "進階"}, {"zh": "你作業做完了嗎？", "en": "Have you finished your homework yet?", "grammar": "現在完成式 yet", "level": "進階"}, {"zh": "當我到車站時，火車已經離開了。", "en": "The train had already left when I arrived at the station.", "grammar": "過去完成式", "level": "進階"}, {"zh": "媽媽回家時，我正在洗碗。", "en": "I was washing the dishes when Mom came home.", "grammar": "過去進行式", "level": "進階"}, {"zh": "我在做功課的時候，弟弟一直在唱歌。", "en": "My brother kept singing while I was doing my homework.", "grammar": "過去進行式", "level": "進階"}, {"zh": "當電話響起時，我們正在吃晚餐。", "en": "We were having dinner when the phone rang.", "grammar": "過去進行式", "level": "進階"}, {"zh": "如果明天下雨，我們就待在家裡。", "en": "If it rains tomorrow, we will stay home.", "grammar": "第一類條件句", "level": "進階"}, {"zh": "如果你累了，就休息一下。", "en": "If you are tired, take a short break.", "grammar": "if + 祈使句", "level": "進階"}, {"zh": "我到家時會打電話給你。", "en": "I will call you when I get home.", "grammar": "when 時間子句", "level": "進階"}, {"zh": "在你出去之前，請先完成作業。", "en": "Please finish your homework before you go out.", "grammar": "before 子句", "level": "進階"}, {"zh": "吃完早餐後，我們就出發。", "en": "We will leave after we finish breakfast.", "grammar": "after 子句", "level": "進階"}, {"zh": "雖然下著雨，我們還是走去學校。", "en": "Although it was raining, we still walked to school.", "grammar": "although", "level": "進階"}, {"zh": "因為公車遲到了，所以我上學遲到了。", "en": "I was late for school because the bus was late.", "grammar": "because", "level": "進階"}, {"zh": "天氣很冷，所以我穿上了外套。", "en": "It was cold, so I put on my jacket.", "grammar": "so", "level": "進階"}, {"zh": "我喜歡這本書，但是我弟弟覺得它很無聊。", "en": "I like this book, but my brother thinks it is boring.", "grammar": "but", "level": "進階"}, {"zh": "你可以現在做，也可以晚一點做。", "en": "You can do it now or you can do it later.", "grammar": "or", "level": "進階"}, {"zh": "我不知道她住在哪裡。", "en": "I don't know where she lives.", "grammar": "間接問句", "level": "進階"}, {"zh": "你可以告訴我洗手間在哪裡嗎？", "en": "Can you tell me where the restroom is?", "grammar": "間接問句", "level": "進階"}, {"zh": "我想知道他為什麼沒來上學。", "en": "I wonder why he didn't come to school.", "grammar": "間接問句", "level": "進階"}, {"zh": "這是我昨天在圖書館借的書。", "en": "This is the book that I borrowed from the library yesterday.", "grammar": "關係子句", "level": "進階"}, {"zh": "住在隔壁的女孩是我的同學。", "en": "The girl who lives next door is my classmate.", "grammar": "關係子句", "level": "進階"}, {"zh": "這是我們去年參觀的博物館。", "en": "This is the museum that we visited last year.", "grammar": "關係子句", "level": "進階"}, {"zh": "爸爸叫我先把桌子整理乾淨。", "en": "Dad told me to clean the table first.", "grammar": "tell + 人 + to", "level": "進階"}, {"zh": "老師要我們安靜地讀十分鐘。", "en": "The teacher asked us to read quietly for ten minutes.", "grammar": "ask + 人 + to", "level": "進階"}, {"zh": "媽媽不讓我們在客廳踢球。", "en": "Mom doesn't let us play ball in the living room.", "grammar": "let + 人 + 原形", "level": "進階"}, {"zh": "這個笑話讓大家都笑了。", "en": "The joke made everyone laugh.", "grammar": "make + 人 + 原形", "level": "進階"}, {"zh": "我看到一隻鳥飛過窗戶。", "en": "I saw a bird fly past the window.", "grammar": "感官動詞", "level": "進階"}, {"zh": "她聽見有人敲門。", "en": "She heard someone knock on the door.", "grammar": "感官動詞", "level": "進階"}, {"zh": "我的腳踏車昨天被修好了。", "en": "My bike was repaired yesterday.", "grammar": "被動語態", "level": "進階"}, {"zh": "這些餅乾是我媽媽做的。", "en": "These cookies were made by my mom.", "grammar": "被動語態", "level": "進階"}, {"zh": "英文在很多國家都有人使用。", "en": "English is spoken in many countries.", "grammar": "被動語態", "level": "進階"}, {"zh": "如果我有更多時間，我會每天多讀一點英文。", "en": "If I had more time, I would read more English every day.", "grammar": "第二類條件句", "level": "挑戰"}, {"zh": "如果我是你，我會先把最難的題目做完。", "en": "If I were you, I would finish the hardest questions first.", "grammar": "第二類條件句", "level": "挑戰"}, {"zh": "我希望我明天不用這麼早起床。", "en": "I wish I didn't have to get up so early tomorrow.", "grammar": "wish", "level": "挑戰"}, {"zh": "我不知道明天會不會下雨。", "en": "I don't know whether it will rain tomorrow.", "grammar": "whether", "level": "挑戰"}, {"zh": "不管你選哪一本，我都會跟你一起讀。", "en": "Whichever book you choose, I will read it with you.", "grammar": "whichever", "level": "挑戰"}, {"zh": "她不但會彈鋼琴，也會拉小提琴。", "en": "She can play not only the piano but also the violin.", "grammar": "not only...but also", "level": "挑戰"}, {"zh": "我寧願走路，也不想在這裡等公車。", "en": "I would rather walk than wait for the bus here.", "grammar": "would rather", "level": "挑戰"}, {"zh": "這本書太難了，我一個人看不懂。", "en": "This book is too difficult for me to understand by myself.", "grammar": "too...to", "level": "挑戰"}, {"zh": "她說得夠慢，所以大家都聽得懂。", "en": "She spoke slowly enough for everyone to understand.", "grammar": "副詞 + enough", "level": "挑戰"}, {"zh": "我越常練習，就越有信心。", "en": "The more I practice, the more confident I become.", "grammar": "the more...the more", "level": "挑戰"}, {"zh": "我一到家就會把這件事告訴媽媽。", "en": "I will tell Mom about it as soon as I get home.", "grammar": "as soon as", "level": "挑戰"}, {"zh": "在你真正試過之前，不要說你做不到。", "en": "Don't say you can't do it until you really try.", "grammar": "until", "level": "挑戰"}, {"zh": "即使我很累，我還是把作業完成了。", "en": "Even though I was tired, I finished my homework.", "grammar": "even though", "level": "挑戰"}, {"zh": "除非你現在出門，否則你會錯過公車。", "en": "Unless you leave now, you will miss the bus.", "grammar": "unless", "level": "挑戰"}, {"zh": "那是我看過最好笑的電影之一。", "en": "That is one of the funniest movies I have ever seen.", "grammar": "最高級 + 現在完成式", "level": "挑戰"}, {"zh": "這是我第一次自己搭火車。", "en": "This is the first time I have taken a train by myself.", "grammar": "現在完成式", "level": "挑戰"}, {"zh": "我原本以為考試會比實際上更難。", "en": "I thought the test would be harder than it actually was.", "grammar": "時態一致", "level": "挑戰"}, {"zh": "老師說地球繞著太陽轉。", "en": "The teacher said that the Earth goes around the Sun.", "grammar": "間接引語", "level": "挑戰"}, {"zh": "她問我是否已經完成報告。", "en": "She asked me whether I had finished the report.", "grammar": "間接引語", "level": "挑戰"}, {"zh": "我被告知要在八點以前到學校。", "en": "I was told to get to school before eight.", "grammar": "被動 + 不定詞", "level": "挑戰"}, {"zh": "這個問題比我原先想的容易得多。", "en": "This question is much easier than I first thought.", "grammar": "比較級修飾", "level": "挑戰"}, {"zh": "他跑得太快，我跟不上他。", "en": "He ran so fast that I couldn't keep up with him.", "grammar": "so...that", "level": "挑戰"}, {"zh": "那部電影太有趣了，我看了兩次。", "en": "The movie was so interesting that I watched it twice.", "grammar": "so...that", "level": "挑戰"}, {"zh": "天氣冷到湖面都結冰了。", "en": "It was so cold that the lake froze.", "grammar": "so...that", "level": "挑戰"}, {"zh": "我一邊聽音樂，一邊整理房間。", "en": "I cleaned my room while listening to music.", "grammar": "分詞片語", "level": "挑戰"}, {"zh": "完成作業後，她去幫媽媽準備晚餐。", "en": "After finishing her homework, she helped Mom prepare dinner.", "grammar": "動名詞片語", "level": "挑戰"}, {"zh": "不知道答案時，我會先看上下文找線索。", "en": "When I don't know the answer, I look at the context for clues first.", "grammar": "時間子句", "level": "挑戰"}, {"zh": "學新單字時，我喜歡把它放進完整句子裡。", "en": "When learning a new word, I like to put it in a complete sentence.", "grammar": "分詞片語", "level": "挑戰"}, {"zh": "雖然這篇文章有幾個生字，我還是能懂大意。", "en": "Although there are a few new words in this article, I can still understand the main idea.", "grammar": "although", "level": "挑戰"}, {"zh": "如果句子太長，我會先找主詞和動詞。", "en": "If a sentence is too long, I look for the subject and verb first.", "grammar": "if", "level": "挑戰"}]};
+let mode='g3', pool=[], order=[], pos=0, score=0, wrong=0, chosen=[], checked=false;
+const $=id=>document.getElementById(id);
+
+function enter(m){
+  mode=m; $('home').classList.add('hidden'); $('app').classList.remove('hidden');
+  $('title').textContent=m==='g3'?'🧒 小三｜句子重組':'👧 小六｜句子重組';
+  $('subtitle').textContent=m==='g3'?'生活化核心句型':'文法書銜接：基礎 → 進階 → 挑戰';
+  const lf=$('levelFilter'); lf.innerHTML='';
+  const levels=m==='g3'?['全部']:['全部','基礎','進階','挑戰'];
+  levels.forEach(x=>{let o=document.createElement('option');o.value=x;o.textContent=x;lf.appendChild(o)});
+  resetRound();
+}
+function goHome(){$('app').classList.add('hidden');$('home').classList.remove('hidden')}
+function rebuildGrammarOptions(){
+  const lf=$('levelFilter').value||'全部';
+  const base=DATA[mode].filter(q=>lf==='全部'||q.level===lf);
+  const grammars=[...new Set(base.map(q=>q.grammar))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  const gf=$('grammarFilter'), old=gf.value; gf.innerHTML='<option value="全部">全部文法</option>';
+  grammars.forEach(g=>{let o=document.createElement('option');o.value=g;o.textContent=g;gf.appendChild(o)});
+  if(grammars.includes(old)) gf.value=old;
+}
+function resetRound(){
+  rebuildGrammarOptions();
+  const lv=$('levelFilter').value||'全部', gr=$('grammarFilter').value||'全部';
+  pool=DATA[mode].filter(q=>(lv==='全部'||q.level===lv)&&(gr==='全部'||q.grammar===gr));
+  order=[...Array(pool.length).keys()];
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+  pos=0;score=0;wrong=0;$('score').textContent=0;$('wrong').textContent=0;$('poolCount').textContent=pool.length;
+  showQuestion();
+}
+function chunks(sentence){
+  const clean=sentence.replace(/[.?]$/,'');
+  const words=clean.split(' ');
+  let out=[];
+
+  // 先用「自然語塊」切句，避免出現 now, you / will miss / the bus 這種怪切法
+  const joinPatterns = [
+    /^(as soon as)$/i,
+    /^(even though)$/i,
+    /^(not only)$/i,
+    /^(but also)$/i,
+    /^(would rather)$/i,
+    /^(have to)$/i,
+    /^(has to)$/i,
+    /^(had to)$/i,
+    /^(going to)$/i,
+    /^(used to)$/i,
+    /^(a lot of)$/i,
+    /^(too many)$/i,
+    /^(too much)$/i,
+    /^(as .* as)$/i
+  ];
+
+  const punctuationBreak = s => /[,;:]$/.test(s);
+
+  for(let i=0;i<words.length;){
+    let chunk = words[i];
+
+    // 常見功能詞和固定搭配盡量綁在一起
+    if(i+2 < words.length){
+      const three = words.slice(i,i+3).join(' ');
+      if(joinPatterns.some(r=>r.test(three))){
+        out.push(three); i+=3; continue;
+      }
+    }
+    if(i+1 < words.length){
+      const two = words.slice(i,i+2).join(' ');
+      if(joinPatterns.some(r=>r.test(two))){
+        out.push(two); i+=2; continue;
+      }
+    }
+
+    // 介系詞/冠詞/所有格 + 名詞，或助動詞 + 動詞，盡量視為一個自然語塊
+    const w = words[i].toLowerCase().replace(/[,“”"']/g,'');
+    const next = i+1 < words.length ? words[i+1].toLowerCase().replace(/[,.!?;:“”"']/g,'') : '';
+    const bindFirst = ['the','a','an','my','your','his','her','our','their','this','that','these','those',
+                       'to','for','with','at','in','on','from','before','after','without',
+                       'will','would','can','could','should','must','may','might','did','do','does',
+                       'have','has','had','am','is','are','was','were'];
+    if(i+1 < words.length && bindFirst.includes(w) && !punctuationBreak(words[i])){
+      chunk = words.slice(i,i+2).join(' ');
+      i += 2;
+    } else {
+      i += 1;
+    }
+
+    // 若這個語塊以逗號結尾，就不要再跟後半句綁在一起
+    out.push(chunk);
+  }
+
+  // 小六若切得太碎，再把相鄰的短語塊合併，但不跨逗號
+  if(mode==='g6' && out.length > 7){
+    let merged=[];
+    for(let i=0;i<out.length;i++){
+      if(i+1<out.length &&
+         out[i].split(' ').length===1 &&
+         out[i+1].split(' ').length===1 &&
+         !punctuationBreak(out[i])){
+        merged.push(out[i]+' '+out[i+1]); i++;
+      }else{
+        merged.push(out[i]);
+      }
+    }
+    out=merged;
+  }
+
+  let shuffled=out.map((t,i)=>({t,i}));
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]}
+  if(shuffled.map(x=>x.i).every((x,i)=>x===i) && shuffled.length>1) [shuffled[0],shuffled[1]]=[shuffled[1],shuffled[0]];
+  return {correct:out, shuffled};
+}
+let current=null, parts=null;
+function showQuestion(){
+  if(!pool.length){$('zh').textContent='這個篩選目前沒有題目。';$('wordBank').innerHTML='';return}
+  if(pos>=order.length){resetRound();return}
+  current=pool[order[pos]]; parts=chunks(current.en); chosen=[]; checked=false;
+  $('num').textContent=pos+1; $('zh').textContent=current.zh; $('grammarChip').textContent='文法：'+current.grammar; $('levelChip').textContent='難度：'+current.level;
+  $('feedback').className='hidden';$('feedback').innerHTML='';$('nextBtn').classList.add('hidden');$('checkBtn').disabled=false;
+  renderAnswer(); renderBank(); $('bar').style.width=((pos/order.length)*100)+'%';
+}
+function renderAnswer(){
+  const z=$('answerZone'); z.innerHTML='';
+  if(!chosen.length){z.innerHTML='<span class="small" id="placeholder">點下面的英文片段，依序排到這裡。</span>';return}
+  chosen.forEach((idx,k)=>{let b=document.createElement('button');b.className='answer-token';b.textContent=parts.shuffled[idx].t;b.onclick=()=>{if(checked)return;chosen.splice(k,1);renderAnswer();renderBank()};z.appendChild(b)})
+}
+function renderBank(){
+  const b=$('wordBank');b.innerHTML='';
+  parts.shuffled.forEach((x,i)=>{let bt=document.createElement('button');bt.className='wordbtn'+(chosen.includes(i)?' used':'');bt.textContent=x.t;bt.disabled=checked||chosen.includes(i);bt.onclick=()=>{chosen.push(i);renderAnswer();renderBank()};b.appendChild(bt)})
+}
+function undo(){if(checked||!chosen.length)return;chosen.pop();renderAnswer();renderBank()}
+function clearAnswer(){if(checked)return;chosen=[];renderAnswer();renderBank()}
+function normalize(s){return s.replace(/[.?!]/g,'').replace(/\s+/g,' ').trim().toLowerCase()}
+function checkAnswer(){
+  if(checked)return;
+  if(chosen.length!==parts.shuffled.length){const f=$('feedback');f.className='feedback bad';f.innerHTML='❌ 還沒有排完喔。';return}
+  checked=true; $('checkBtn').disabled=true;
+  const mine=chosen.map(i=>parts.shuffled[i].t).join(' ');
+  const ok=normalize(mine)===normalize(current.en);
+  const f=$('feedback');
+  if(ok){score++;$('score').textContent=score;f.className='feedback good';f.innerHTML='✅ 答對了！<div class="correct-line">'+current.en+'</div>'}
+  else{wrong++;$('wrong').textContent=wrong;f.className='feedback bad';f.innerHTML='❌ 這題還差一點。<div class="correct-line">正確句子：'+current.en+'</div>'}
+  renderBank();$('nextBtn').classList.remove('hidden');
+}
+function nextQuestion(){pos++;if(pos>=order.length){pos=0;for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}}showQuestion()}
+</script>
+</body>
+</html>
